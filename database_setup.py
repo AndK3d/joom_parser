@@ -26,6 +26,31 @@ class ItemsSpecification(Base):
     items = relationship(Items)
 
 
+class Reviews(Base):
+    __tablename__ = 'reviews'
+
+    id = Column(Integer, primary_key=True)
+    site_review_id = Column(String(80),  nullable=False)
+    site_product_id = Column(String(80), nullable=False)
+    createdTimeMs = Column(Integer)
+    updatedTimeMs = Column(Integer)
+    text = Column(String(255))
+    starRating = Column(String(10))
+    category_id = Column(String(80))
+
+
+class ReviewsImages(Base):
+    __tablename__ = 'reviews_images'
+
+    id = Column(Integer, primary_key=True)
+    site_review_id = Column(String(80),  nullable=False)
+    url_pic_size0 = Column(String(255))
+    url_pic_size1 = Column(String(255))
+    url_pic_size2 = Column(String(255))
+    url_pic_size3 = Column(String(255))
+    url_pic_size4 = Column(String(255))
+
+
 
 # class MenuItem(Base):
 #     __tablename__ = 'menu_item'

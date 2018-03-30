@@ -86,38 +86,65 @@ def getReviews(site_item_id, accessToken):
                'count': '8',
                'sort': 'top'
                }
+    cnt = 0
+    while True:
+        cnt = cnt+1
+        print(cnt)
 
-    rsps = requests.get(url=url, headers=headers, params=payload)
+        time.sleep(2)
+        rsps = requests.get(url=url, headers=headers, params=payload)
 
-    if rsps.status_code == 200:
-        jsonresponse = rsps.json()
+        if rsps.status_code == 200:
+            jsonresponse = rsps.json()
+            reviews = jsonresponse["payload"]["items"]
 
-        # getting info for request to next page
-        if 'nextPageToken' in jsonresponse["payload"]:
-            nextPageToken = jsonresponse["payload"]["nextPageToken"]
-            print(nextPageToken)
+            for review in reviews:
+                site_review_id = review["id"]
+                createdTimeMs = review["createdTimeMs"]
+                updatedTimeMs = review["updatedTimeMs"]
 
-        reviews = jsonresponse["payload"]["items"]
+                if "text" in review:
+                    text = review["text"]
 
-        for review in reviews:
-            site_review_id = review["id"]
-            createdTimeMs = review["createdTimeMs"]
-            updatedTimeMs = review["updatedTimeMs"]
-            text = review["text"]
-            starRating = review["starRating"]
+                starRating = review["starRating"]
 
-            print(site_review_id)
-            print(createdTimeMs)
-            print(updatedTimeMs)
-            print(text)
-            print(starRating)
+                print(site_review_id)
+                print(createdTimeMs)
+                print(updatedTimeMs)
+                print(text)
+                print(starRating)
 
-            if "photos" in review:
-                for photo in review["photos"]:
-                    print(photo["images"][0]["url"])
-    else:
-        "getReviews: Error getting review. Response status {}".format(rsps.status_code)
-    return
+                if "photos" in review:
+                    for photo in review["photos"]:
+                        print(photo["images"][0]["url"])
+                        print(photo["images"][1]["url"])
+                        print(photo["images"][2]["url"])
+                        print(photo["images"][3]["url"])
+                        print(photo["images"][4]["url"])
+
+                # getting info for request to next page
+
+                if 'nextPageToken' in jsonresponse["payload"]:
+                    nextPageToken = jsonresponse["payload"]["nextPageToken"]
+                    # print(nextPageToken)
+                    payload = {'filter_id': 'all',
+                               'count': '8',
+                               'sort': 'top',
+                               'pageToken': nextPageToken
+                               }
+                else:
+                    print("INFO: pageToken for next reviews page is absent. Break review page loop")
+                    break
+
+                # Just in case, if something goes wrong
+                if cnt == 100:
+                    print("INFO: pages loop limit")
+                    break
+
+        else:
+            "getReviews: Error getting review. Response status {}".format(rsps.status_code)
+            return
+
 
 accessToken = getAccessToken()
 category_id = "1473502937203552604-139-2-118-470466103"
