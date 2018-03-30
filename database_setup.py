@@ -10,14 +10,21 @@ Base = declarative_base()
 class Items(Base):
     __tablename__ = 'items'
 
-    id = Column(
-        Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    # look like '1509000350026007581-17-1-26193-3818161962'
+    site_item_id = Column(String(80), nullable=False)
 
-    item_id = Column(
-        String(80), nullable=False)
 
-    search_category_id = Column(
-        String(80))
+class ItemsSpecification(Base):
+    __tablename__ = 'ItemsSpecification'
+
+    id = Column(Integer, primary_key=True)
+    item_id = Column(Integer, ForeignKey('items.id'))
+    category_id = Column(Integer)
+    raiting = Column(String(10))
+    #
+    items = relationship(Items)
+
 
 
 # class MenuItem(Base):

@@ -11,6 +11,7 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+
 def getAccessToken():
     rsps = requests.post("https://www.joom.com/tokens/init?")
     accessToken = None
@@ -21,57 +22,106 @@ def getAccessToken():
             accessToken = jsonresponse["accessToken"]
 
     else:
-        "getAccessToken: Error init token. Responce status {}".format(rsps.status_code)
+        "getAccessToken: Error init token. Response status {}".format(rsps.status_code)
 
     return accessToken
 
 
-accessToken = getAccessToken()
+def getProducts(site_category_id, accessToken):
+    items_count = 48
+    url = "https://api.joom.com/1.1/search/products"
+    headers = {'Accept': '*/*',
+               'Authorization': 'Bearer ' + accessToken,
+               'Content-Encoding': 'gzip'
+               }
+    body = {"count": items_count,
+            "filters": [{"id": "categoryId", "value": {"type": "categories", "items": [{"id": site_category_id}]}}]}
 
-category_id = "1473502937203552604-139-2-118-470466103"
-items_count = 48
+    # Pages loop.
+    # Getting items from each page
+    cnt = 0
+    while True:
+        cnt = cnt + 1
+        print(cnt)
 
-url = "https://api.joom.com/1.1/search/products"
-headers = {'Accept': '*/*',
-           'Authorization': 'Bearer ' + accessToken,
-           'Content-Encoding': 'gzip'
-           }
-body = {"count": items_count, "filters": [{"id": "categoryId", "value": {"type": "categories", "items": [{"id": category_id}]}}]}
+        time.sleep(2)
+        rsps = requests.post(url=url, headers=headers, json=body)
+        jsonresponse = rsps.json()
 
-# Pages loop.
-# Getting items from each page
-cnt = 0
-while True:
-    cnt = cnt + 1
-    print(cnt)
+        items = jsonresponse["contexts"][0]["value"]
 
-    time.sleep(2)
-    rsps = requests.post(url=url, headers=headers, json=body)
-    jsonresponse = rsps.json()
+        # insert items into database
+        for item in items:
+            newItem = Items(site_item_id=item["id"])
+            session.add(newItem)
+            session.commit()
 
-    items = jsonresponse["contexts"][0]["value"]
+        # getting info for request to next page
+        if 'nextPageToken' in jsonresponse["payload"]:
+            nextPageToken = jsonresponse["payload"]["nextPageToken"]
+            body = {"count": items_count,
+                    "pageToken": str(nextPageToken),
+                    "filters": [{"id": "categoryId", "value": {"type": "categories", "items": [{"id": site_category_id}]}}]}
+            print("nextPageToken=", nextPageToken)
+        else:
+            print("INFO: nextPageToken is absent. Break page loop")
+            break
 
-    # insert items into database
-    for item in items:
-        newItem = Items(item_id=item["id"],
-                        search_category_id=category_id)
-        session.add(newItem)
-        session.commit()
+        # Just in case, if something goes wrong
+        if cnt == 50:
+            print("INFO: pages loop limit")
+            break
+    return
 
-    # getting info for request to next page
-    if 'nextPageToken' in jsonresponse["payload"]:
-        nextPageToken = jsonresponse["payload"]["nextPageToken"]
-        body = {"count": items_count,
-                "pageToken": str(nextPageToken),
-                "filters": [{"id": "categoryId", "value": {"type": "categories", "items": [{"id": category_id}]}}]}
-        print("nextPageToken=", nextPageToken)
+
+def getReviews(site_item_id, accessToken):
+
+    # https://api.joom.com/1.1/products/1500618810160360862-64-1-709-3493395750/reviews?filter_id=all&count=8&sort=top&language=ru-RU&currency=UAH&_=jfdxc8ye
+    url = 'https://api.joom.com/1.1/products/{}/reviews'.format(site_item_id)
+    headers = {'Accept': '*/*',
+               'Authorization': 'Bearer ' + accessToken,
+               'Content-Encoding': 'gzip'
+               }
+    payload = {'filter_id': 'all',
+               'count': '8',
+               'sort': 'top'
+               }
+
+    rsps = requests.get(url=url, headers=headers, params=payload)
+
+    if rsps.status_code == 200:
+        jsonresponse = rsps.json()
+
+        # getting info for request to next page
+        if 'nextPageToken' in jsonresponse["payload"]:
+            nextPageToken = jsonresponse["payload"]["nextPageToken"]
+            print(nextPageToken)
+
+        reviews = jsonresponse["payload"]["items"]
+
+        for review in reviews:
+            site_review_id = review["id"]
+            createdTimeMs = review["createdTimeMs"]
+            updatedTimeMs = review["updatedTimeMs"]
+            text = review["text"]
+            starRating = review["starRating"]
+
+            print(site_review_id)
+            print(createdTimeMs)
+            print(updatedTimeMs)
+            print(text)
+            print(starRating)
+
+            if "photos" in review:
+                for photo in review["photos"]:
+                    print(photo["images"][0]["url"])
     else:
-        print("INFO: nextPageToken is absent. Break page loop")
-        break
+        "getReviews: Error getting review. Response status {}".format(rsps.status_code)
+    return
 
-    # Just in case, if something goes wrong
-    if cnt == 50:
-        print("INFO: pages loop limit")
-        break
+accessToken = getAccessToken()
+category_id = "1473502937203552604-139-2-118-470466103"
+site_item_id = "1500618810160360862-64-1-709-3493395750"
 
 
+getReviews(site_item_id, accessToken)
