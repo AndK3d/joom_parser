@@ -3,7 +3,7 @@ import time
 # for database
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Items
+from database_setup import Base, Items, Reviews, ReviewsImages
 
 engine = create_engine('sqlite:///joom.db')
 Base.metadata.bind = engine
@@ -102,11 +102,27 @@ def getReviews(site_item_id, accessToken):
                 site_review_id = review["id"]
                 createdTimeMs = review["createdTimeMs"]
                 updatedTimeMs = review["updatedTimeMs"]
+                starRating = review["starRating"]
 
                 if "text" in review:
                     text = review["text"]
 
-                starRating = review["starRating"]
+                fld_site_review_id = Reviews(site_review_id=site_review_id)
+                fld_createdTimeMs = Reviews(createdTimeMs=createdTimeMs)
+                fld_updatedTimeMs = Reviews(updatedTimeMs=updatedTimeMs)
+                fld_starRating = Reviews(starRating=starRating)
+
+                if text:
+                    fld_text = Reviews(text=text)
+                    session.add(fld_text)
+
+                session.add(fld_site_review_id)
+                session.add(fld_createdTimeMs)
+                session.add(fld_updatedTimeMs)
+                session.add(fld_starRating)
+
+                session.commit()
+
 
                 print(site_review_id)
                 print(createdTimeMs)
