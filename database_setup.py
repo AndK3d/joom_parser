@@ -30,20 +30,25 @@ class Reviews(Base):
     __tablename__ = 'reviews'
 
     id = Column(Integer, primary_key=True)
-    site_review_id = Column(String(80),  nullable=False)
-    site_product_id = Column(String(80), nullable=False)
     createdTimeMs = Column(Integer)
     updatedTimeMs = Column(Integer)
+    review_id = Column(String(80),  nullable=False)
+    product_id = Column(String(80))
+    product_variant_id = Column(String(80))
+    likesCount = Column(Integer)
+    user_id = Column(String(80))
+    user_fullName = Column(String(80))
+    user_avatar = Column(String(255))
     text = Column(String(255))
     starRating = Column(String(10))
-    category_id = Column(String(80))
+
 
 
 class ReviewsImages(Base):
     __tablename__ = 'reviews_images'
 
     id = Column(Integer, primary_key=True)
-    site_review_id = Column(String(80),  nullable=False)
+    review_id = Column(String(80),  nullable=False)
     url_pic_size0 = Column(String(255))
     url_pic_size1 = Column(String(255))
     url_pic_size2 = Column(String(255))

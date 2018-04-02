@@ -74,7 +74,7 @@ def getProducts(site_category_id, accessToken):
     return
 
 
-def getReviews(site_item_id, accessToken):
+def getReviews(site_item_id, accessToken, reviews_per_page=8):
 
     # https://api.joom.com/1.1/products/1500618810160360862-64-1-709-3493395750/reviews?filter_id=all&count=8&sort=top&language=ru-RU&currency=UAH&_=jfdxc8ye
     url = 'https://api.joom.com/1.1/products/{}/reviews'.format(site_item_id)
@@ -83,13 +83,13 @@ def getReviews(site_item_id, accessToken):
                'Content-Encoding': 'gzip'
                }
     payload = {'filter_id': 'all',
-               'count': '8',
+               'count': reviews_per_page,
                'sort': 'top'
                }
     cnt = 0
     while True:
         cnt = cnt+1
-        print(cnt)
+        print("Reviews page ", cnt)
 
         time.sleep(2)
         rsps = requests.get(url=url, headers=headers, params=payload)
@@ -99,52 +99,81 @@ def getReviews(site_item_id, accessToken):
             reviews = jsonresponse["payload"]["items"]
 
             for review in reviews:
-                site_review_id = review["id"]
                 createdTimeMs = review["createdTimeMs"]
                 updatedTimeMs = review["updatedTimeMs"]
-                starRating = review["starRating"]
+                review_id = review["id"]
+                product_id = review["productId"]
+                product_variant_id = review["productVariantId"]
+                likesCount = review["likesCount"]
+                user_id = review["user"]["id"]
+                user_fullName = review["user"]["fullName"]
+
+                if "avatar" in review["user"]:
+                    user_avatar = review["user"]["avatar"]["images"][0]["url"]
+                    print("user_avatar=", user_avatar)
+                else:
+                    user_avatar = None
 
                 if "text" in review:
                     text = review["text"]
+                else:
+                    text = None
+                starRating = review["starRating"]
 
-                fld_site_review_id = Reviews(site_review_id=site_review_id)
-                fld_createdTimeMs = Reviews(createdTimeMs=createdTimeMs)
-                fld_updatedTimeMs = Reviews(updatedTimeMs=updatedTimeMs)
-                fld_starRating = Reviews(starRating=starRating)
+                # Checking for existingReviews. If Review already exist in database - continue loop.
+                # Else add this review to database
+                existingReviews = session.query(Reviews).filter_by(product_id=product_id, review_id=review_id).first()
 
-                if text:
-                    fld_text = Reviews(text=text)
-                    session.add(fld_text)
+                if existingReviews is not None:
+                    continue
 
-                session.add(fld_site_review_id)
-                session.add(fld_createdTimeMs)
-                session.add(fld_updatedTimeMs)
-                session.add(fld_starRating)
-
+                session.add(Reviews(createdTimeMs=createdTimeMs,
+                                    updatedTimeMs=updatedTimeMs,
+                                    review_id=review_id,
+                                    product_id=product_id,
+                                    product_variant_id=product_variant_id,
+                                    likesCount=likesCount,
+                                    user_id=user_id,
+                                    user_fullName=user_fullName,
+                                    user_avatar=user_avatar,
+                                    text=text,
+                                    starRating=starRating
+                                    ))
                 session.commit()
 
-
-                print(site_review_id)
-                print(createdTimeMs)
-                print(updatedTimeMs)
-                print(text)
-                print(starRating)
+                # print("review_id=", review_id)
+                # print("product_id=", product_id)
+                # print("createdTimeMs=", createdTimeMs)
+                # print("updatedTimeMs=", updatedTimeMs)
+                # print("user_id=", user_id)
+                # print("user_fullName=", user_fullName)
+                # print("user_avatar=", user_avatar)
+                # print("starRating=", starRating)
 
                 if "photos" in review:
                     for photo in review["photos"]:
-                        print(photo["images"][0]["url"])
-                        print(photo["images"][1]["url"])
-                        print(photo["images"][2]["url"])
-                        print(photo["images"][3]["url"])
-                        print(photo["images"][4]["url"])
+
+                        # print(photo["images"][0]["url"])
+                        # print(photo["images"][1]["url"])
+                        # print(photo["images"][2]["url"])
+                        # print(photo["images"][3]["url"])
+                        # print(photo["images"][4]["url"])
+
+                        session.add(ReviewsImages(review_id=review_id,
+                                                  url_pic_size0=photo["images"][0]["url"],
+                                                  url_pic_size1=photo["images"][1]["url"],
+                                                  url_pic_size2=photo["images"][2]["url"],
+                                                  url_pic_size3=photo["images"][3]["url"],
+                                                  url_pic_size4=photo["images"][4]["url"]
+                                                  ))
+                        session.commit()
 
                 # getting info for request to next page
 
                 if 'nextPageToken' in jsonresponse["payload"]:
                     nextPageToken = jsonresponse["payload"]["nextPageToken"]
-                    # print(nextPageToken)
                     payload = {'filter_id': 'all',
-                               'count': '8',
+                               'count': reviews_per_page,
                                'sort': 'top',
                                'pageToken': nextPageToken
                                }
