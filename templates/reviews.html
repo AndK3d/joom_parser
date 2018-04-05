@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="\static\styles.css" type="text/css">
+</head>
+<body>
+    {% for review in reviews %}
+
+            <div class = 'reviewsList'>
+                <div class = 'review'>
+                     {{review.user_fullName}} <br>
+                {% for img in images %}
+                    {% if img.review_id == review.review_id %}
+                        <a href='{{img.url_pic_size4}}'>
+                            <img src='{{img.url_pic_size2}}'>
+                        </a>
+                    {% endif %}
+        	    {% endfor %}
+                </div>
+                <br>
+                {{review.text}}          <br>
+	        </div>
+    {% endfor %}
+
+</body>
+</html>
