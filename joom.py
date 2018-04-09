@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Reviews, ReviewsImages, Categories
 
+
 app = Flask(__name__)
 
 engine = create_engine('sqlite:///joom.db')
@@ -33,6 +34,13 @@ def categories():
         print(cat.category_name)
     return
 
+
+# admin page
+@app.route('/comand')
+def comand():
+
+
+    return
 
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'

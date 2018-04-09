@@ -200,20 +200,36 @@ def getCategories(accessToken):
                'Authorization': 'Bearer ' + accessToken,
                'Content-Encoding': 'gzip'
                }
+    categoryID = '1473502936995568913-70-2-118-1271522288'
+    payload = {'levels': 2,
+               'categoryID': categoryID,
+               'parentLevels': 1
+               }
 
-    payload = {'levels': 1}
+
+    # levels=1&categoryId=1473502936995568913-70-2-118-1271522288&parentLevels=1&language=ru-RU&currency=UAH&_=jfsmicsg
 
     rsps = requests.get(url=url, headers=headers, params=payload)
 
     if rsps.status_code == 200:
         jsonresponse = rsps.json()
-
+        print("total -", len(jsonresponse['payload']['children']))
         for category in jsonresponse['payload']['children']:
+
             print(category['name'], category['id'])
+
+            # Checking for existingCategories. If Category already exist in database - continue loop.
+            # Else add this category to database
+            existingCategory = session.query(Categories).filter_by(category_id=category['id']).first()
+
+            if existingCategory is not None:
+                continue
+
             print(category)
+            '''
             for img in category['mainImage']['images']:
                 print(img)
-
+            '''
             session.add(Categories(category_id=category['id'],
                                    category_name=category['name'],
                                    hasPublicChildren=category['hasPublicChildren']
