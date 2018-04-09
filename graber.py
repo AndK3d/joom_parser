@@ -3,7 +3,7 @@ import time
 # for database
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Items, Reviews, ReviewsImages
+from database_setup import Base, Items, Reviews, ReviewsImages, Categories
 
 engine = create_engine('sqlite:///joom.db')
 Base.metadata.bind = engine
@@ -191,9 +191,48 @@ def getReviews(site_item_id, accessToken, reviews_per_page=8):
             return
 
 
+def getCategories(accessToken):
+
+    # https://api.joom.com/1.1/categoriesHierarchy?levels=1&language=en-US&currency=UAH&_=jfr29pqk
+    url = 'https://api.joom.com/1.1/categoriesHierarchy'
+
+    headers = {'Accept': '*/*',
+               'Authorization': 'Bearer ' + accessToken,
+               'Content-Encoding': 'gzip'
+               }
+
+    payload = {'levels': 1}
+
+    rsps = requests.get(url=url, headers=headers, params=payload)
+
+    if rsps.status_code == 200:
+        jsonresponse = rsps.json()
+
+        for category in jsonresponse['payload']['children']:
+            print(category['name'], category['id'])
+            print(category)
+            for img in category['mainImage']['images']:
+                print(img)
+
+            session.add(Categories(category_id=category['id'],
+                                   category_name=category['name'],
+                                   hasPublicChildren=category['hasPublicChildren']
+                                   ))
+            session.commit()
+    return
+
+
+def scrap():
+
+
+
+    return
+
 accessToken = getAccessToken()
 category_id = "1473502937203552604-139-2-118-470466103"
 site_item_id = "1500618810160360862-64-1-709-3493395750"
 
 
-getReviews(site_item_id, accessToken)
+#getReviews(site_item_id, accessToken)
+
+getCategories(accessToken)

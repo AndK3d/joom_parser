@@ -6,6 +6,14 @@
     <link rel="stylesheet" href="\static\styles.css" type="text/css">
 </head>
 <body>
+
+    {% for category in categories %}
+    <div class = 'categoriesList'>
+        {{category.category_name}}
+    </div>
+
+    {% endfor %}
+
     {% for review in reviews %}
 
             <div class = 'reviewsList'>

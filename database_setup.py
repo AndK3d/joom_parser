@@ -1,6 +1,6 @@
 import os
 import sys
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -43,7 +43,6 @@ class Reviews(Base):
     starRating = Column(String(10))
 
 
-
 class ReviewsImages(Base):
     __tablename__ = 'reviews_images'
 
@@ -54,6 +53,20 @@ class ReviewsImages(Base):
     url_pic_size2 = Column(String(255))
     url_pic_size3 = Column(String(255))
     url_pic_size4 = Column(String(255))
+
+
+class Categories(Base):
+    __tablename__ = 'categories'
+
+    id = Column(Integer, primary_key=True)
+    category_id = Column(String(80),  nullable=False)
+    category_name = Column(String(255))
+    hasPublicChildren = Column(Boolean)
+    # main_image_mdpi = Column(String(255))
+    # main_image_hdpi = Column(String(255))
+    # main_image_xhdpi = Column(String(255))
+    # main_image_xxhdpi = Column(String(255))
+    # main_image_xxxhdpi = Column(String(255))
 
 
 
