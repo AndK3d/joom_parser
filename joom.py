@@ -13,6 +13,7 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+
 # Making an API Endpoint (GET request)
 @app.route('/')
 @app.route('/reviews')
@@ -28,17 +29,14 @@ def reviews():
 @app.route('/categories')
 def categories():
 
-    categories = session.query(Categories).all()
-    #return render_template('reviews.html', reviews=reviews)
-    for cat in categories:
-        print(cat.category_name)
-    return
+    categories = session.query(Categories).filter_by(parent_id=None).all()
+
+    return render_template('categories.html', categories=categories)
 
 
 # admin page
-@app.route('/comand')
-def comand():
-
+@app.route('/command')
+def command():
 
     return
 

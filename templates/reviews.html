@@ -6,19 +6,11 @@
     <link rel="stylesheet" href="\static\styles.css" type="text/css">
 </head>
 <body>
-
-    {% for category in categories %}
-    <div class = 'categoriesList'>
-        {{category.category_name}}
-    </div>
-
-    {% endfor %}
-
     {% for review in reviews %}
 
             <div class = 'reviewsList'>
                 <div class = 'review'>
-                     {{review.user_fullName}} <br>
+
                 {% for img in images %}
                     {% if img.review_id == review.review_id %}
                         <a href='{{img.url_pic_size4}}'>
@@ -26,9 +18,14 @@
                         </a>
                     {% endif %}
         	    {% endfor %}
+
+                <div class="user_name">
+                    {{review.user_fullName}} <br>
                 </div>
-                <br>
-                {{review.text}}          <br>
+
+                    {{review.text}}          <br>
+
+                </div>
 	        </div>
     {% endfor %}
 

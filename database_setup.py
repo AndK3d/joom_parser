@@ -62,6 +62,7 @@ class Categories(Base):
     category_id = Column(String(80),  nullable=False)
     category_name = Column(String(255))
     hasPublicChildren = Column(Boolean)
+    parent_id = Column(String(80))
     # main_image_mdpi = Column(String(255))
     # main_image_hdpi = Column(String(255))
     # main_image_xhdpi = Column(String(255))
