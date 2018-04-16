@@ -28,7 +28,7 @@ def getAccessToken():
 
 
 def getProducts(site_category_id, accessToken):
-    items_count = 48
+    items_count = 1000
     url = "https://api.joom.com/1.1/search/products"
     headers = {'Accept': '*/*',
                'Authorization': 'Bearer ' + accessToken,
@@ -52,7 +52,7 @@ def getProducts(site_category_id, accessToken):
 
         # insert items into database
         for item in items:
-            newItem = Items(site_item_id=item["id"])
+            newItem = Items(site_item_id=item["id"], category_id = site_category_id )
             session.add(newItem)
             session.commit()
 
@@ -74,7 +74,7 @@ def getProducts(site_category_id, accessToken):
     return
 
 
-def getReviews(site_item_id, accessToken, reviews_per_page=8):
+def getReviews(site_item_id, accessToken, reviews_per_page=100):
 
     # https://api.joom.com/1.1/products/1500618810160360862-64-1-709-3493395750/reviews?filter_id=all&count=8&sort=top&language=ru-RU&currency=UAH&_=jfdxc8ye
     url = 'https://api.joom.com/1.1/products/{}/reviews'.format(site_item_id)
@@ -86,6 +86,7 @@ def getReviews(site_item_id, accessToken, reviews_per_page=8):
                'count': reviews_per_page,
                'sort': 'top'
                }
+    print('item_id=', site_item_id)
     cnt = 0
     while True:
         cnt = cnt+1
@@ -107,10 +108,10 @@ def getReviews(site_item_id, accessToken, reviews_per_page=8):
                 likesCount = review["likesCount"]
                 user_id = review["user"]["id"]
                 user_fullName = review["user"]["fullName"]
-
+                print("review_id=", review_id)
                 if "avatar" in review["user"]:
                     user_avatar = review["user"]["avatar"]["images"][0]["url"]
-                    print("user_avatar=", user_avatar)
+
                 else:
                     user_avatar = None
 
@@ -124,49 +125,48 @@ def getReviews(site_item_id, accessToken, reviews_per_page=8):
                 # Else add this review to database
                 existingReviews = session.query(Reviews).filter_by(product_id=product_id, review_id=review_id).first()
 
-                if existingReviews is not None:
-                    continue
+                if existingReviews == None:
 
-                session.add(Reviews(createdTimeMs=createdTimeMs,
-                                    updatedTimeMs=updatedTimeMs,
-                                    review_id=review_id,
-                                    product_id=product_id,
-                                    product_variant_id=product_variant_id,
-                                    likesCount=likesCount,
-                                    user_id=user_id,
-                                    user_fullName=user_fullName,
-                                    user_avatar=user_avatar,
-                                    text=text,
-                                    starRating=starRating
-                                    ))
-                session.commit()
+                    session.add(Reviews(createdTimeMs=createdTimeMs,
+                                        updatedTimeMs=updatedTimeMs,
+                                        review_id=review_id,
+                                        product_id=product_id,
+                                        product_variant_id=product_variant_id,
+                                        likesCount=likesCount,
+                                        user_id=user_id,
+                                        user_fullName=user_fullName,
+                                        user_avatar=user_avatar,
+                                        text=text,
+                                        starRating=starRating
+                                        ))
+                    session.commit()
 
-                # print("review_id=", review_id)
-                # print("product_id=", product_id)
-                # print("createdTimeMs=", createdTimeMs)
-                # print("updatedTimeMs=", updatedTimeMs)
-                # print("user_id=", user_id)
-                # print("user_fullName=", user_fullName)
-                # print("user_avatar=", user_avatar)
-                # print("starRating=", starRating)
+                    if "photos" in review:
+                        for photo in review["photos"]:
 
-                if "photos" in review:
-                    for photo in review["photos"]:
+                            img_count = len(photo["images"])
+                            print(img_count)
+                            url_pic_size0 = None
+                            url_pic_size1 = None
+                            url_pic_size2 = None
+                            url_pic_size3 = None
+                            url_pic_size4 = None
 
-                        # print(photo["images"][0]["url"])
-                        # print(photo["images"][1]["url"])
-                        # print(photo["images"][2]["url"])
-                        # print(photo["images"][3]["url"])
-                        # print(photo["images"][4]["url"])
+                            if img_count > 0: url_pic_size0 = photo["images"][0]["url"]
+                            if img_count > 1: url_pic_size1 = photo["images"][1]["url"]
+                            if img_count > 2: url_pic_size2 = photo["images"][2]["url"]
+                            if img_count > 3: url_pic_size3 = photo["images"][3]["url"]
+                            if img_count > 4: url_pic_size4 = photo["images"][4]["url"]
 
-                        session.add(ReviewsImages(review_id=review_id,
-                                                  url_pic_size0=photo["images"][0]["url"],
-                                                  url_pic_size1=photo["images"][1]["url"],
-                                                  url_pic_size2=photo["images"][2]["url"],
-                                                  url_pic_size3=photo["images"][3]["url"],
-                                                  url_pic_size4=photo["images"][4]["url"]
-                                                  ))
-                        session.commit()
+                            session.add(ReviewsImages(review_id=review_id,
+                                                      url_pic_size0=url_pic_size0,
+                                                      url_pic_size1=url_pic_size1,
+                                                      url_pic_size2=url_pic_size2,
+                                                      url_pic_size3=url_pic_size3,
+                                                      url_pic_size4=url_pic_size4
+                                                      ))
+                            session.commit()
+
 
                 # getting info for request to next page
 
@@ -179,12 +179,12 @@ def getReviews(site_item_id, accessToken, reviews_per_page=8):
                                }
                 else:
                     print("INFO: pageToken for next reviews page is absent. Break review page loop")
-                    break
+                    return
 
                 # Just in case, if something goes wrong
                 if cnt == 100:
                     print("INFO: pages loop limit")
-                    break
+                    return
 
         else:
             "getReviews: Error getting review. Response status {}".format(rsps.status_code)
@@ -254,10 +254,13 @@ def getChildren(tree):
             # session.commit()
 
 
+def scrap(category_id, accessToken):
 
-def scrap():
+    getProducts(category_id, accessToken)
+    items = session.query(Items).filter_by(category_id=category_id).all()
 
-
+    for item in items:
+        getReviews(item.site_item_id, accessToken, 100)
 
     return
 
@@ -265,7 +268,10 @@ accessToken = getAccessToken()
 category_id = "1473502937203552604-139-2-118-470466103"
 site_item_id = "1500618810160360862-64-1-709-3493395750"
 
+category_id ="1481982628148420959-25-2-26312-2483073901" #AS toys
+
+scrap(category_id, accessToken)
 
 #getReviews(site_item_id, accessToken)
 
-getCategories(accessToken)
+#getCategories(accessToken)

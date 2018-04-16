@@ -13,6 +13,7 @@ class Items(Base):
     id = Column(Integer, primary_key=True)
     # look like '1509000350026007581-17-1-26193-3818161962'
     site_item_id = Column(String(80), nullable=False)
+    category_id = Column(String(80))
 
 
 class ItemsSpecification(Base):
