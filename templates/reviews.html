@@ -6,8 +6,8 @@
     <link rel="stylesheet" href="\static\styles.css" type="text/css">
 </head>
 <body>
+    <a href="/reviews?page={{pagination['next_page']}}">Next</a>
     {% for review in reviews %}
-
             <div class = 'reviewsList'>
                 <div class = 'review'>
 
@@ -28,6 +28,6 @@
                 </div>
 	        </div>
     {% endfor %}
-
+     <a href="/reviews?page={{pagination['next_page']}}">Next</a>
 </body>
 </html>

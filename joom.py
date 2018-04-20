@@ -15,15 +15,37 @@ session = DBSession()
 
 
 # Making an API Endpoint (GET request)
-@app.route('/')
-@app.route('/reviews')
+@app.route('/', methods=['GET'])
+@app.route('/reviews', methods=['GET'])
 def reviews():
+    REVIEWS_PER_PAGE = 100
+    page = 0
+    if request.args.get('page'):
+        try:
+            page = int(request.args.get('page'))
+        except ValueError:
+            page = 0
 
-    reviews = session.query(Reviews).all()
+    reviews_count = session.query(Reviews).count()
+    pages_count = int(reviews_count/REVIEWS_PER_PAGE)
+    print(pages_count)
+    offset = page * REVIEWS_PER_PAGE
+
+    reviews = session.query(Reviews).limit(REVIEWS_PER_PAGE).offset(offset)
     images = session.query(ReviewsImages).all()
     categories = session.query(Categories).all()
 
-    return render_template('reviews.html', reviews=reviews, images=images, categories=categories)
+    pagination = {'current_page': page,
+                  'next_page': page+1,
+                  'prev_page': page-1,
+                  'pages_count': pages_count
+                  }
+    return render_template('reviews.html',
+                           reviews=reviews,
+                           images=images,
+                           categories=categories,
+                           pagination=pagination
+                           )
 
 
 @app.route('/categories')
